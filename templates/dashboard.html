@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Stream Panel{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-tachometer-alt"></i> Stream Dashboard</h1>
+            <div class="btn-group">
+                <button class="btn btn-outline-info" id="rtmp-server-btn" onclick="toggleRTMPServer()">
+                    <i class="fas fa-server"></i> <span id="rtmp-status-text">RTMP Server</span>
+                </button>
+                <a href="{{ url_for('new_stream') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Stream
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RTMP Server Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-primary text-white" id="rtmp-server-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-server"></i> Built-in RTMP Server
+                    <span class="badge bg-light text-dark ms-2" id="rtmp-server-status">Loading...</span>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="refreshRTMPStatus()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-link"></i> Stream to this server:</h6>
+                        <div class="mb-2">
+                            <strong>RTMP URL:</strong>
+                            <code class="text-white bg-dark p-1 rounded">rtmp://{{ request.host }}/live/</code>
+                            <button class="btn btn-outline-light btn-sm ms-2" onclick="copyRTMPUrlToClipboard()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Stream Key:</strong> <span class="text-light">Any unique key (auto-creates stream)</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-chart-bar"></i> Server Stats:</h6>
+                        <div class="mb-1">Active Streams: <span id="active-streams-count">-</span></div>
+                        <div class="mb-1">Server Port: <span id="server-port">1935</span></div>
+                        <div class="mb-1">Status: <span id="detailed-server-status">-</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% if streams %}
+        {% for stream in streams %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ stream.name }}</h5>
+                    <span class="badge bg-{{ 'success' if stream.status == 'running' else 'secondary' }}">
+                        {{ stream.status.title() }}
+                    </span>
+                </div>
+                
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>Type:</strong> {{ stream.input_type.upper() }}<br>
+                        <strong>Latency:</strong> {{ stream.latency_mode.title() }}<br>
+                        <strong>Created:</strong> {{ stream.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </p>
+                    
+                    <!-- Stream Controls -->
+                    <div class="btn-group w-100 mb-3" role="group">
+                        {% if stream.status == 'running' %}
+                            <button class="btn btn-outline-danger stream-control" 
+                                    data-stream-id="{{ stream.id }}" 
+                                    data-action="stop">
+                                <i class="fas fa-stop"></i> Stop
+                            </button>
+                        {% else %}
+                            <button class="btn btn-outline-success stream-control" 
+                                    data-stream-id="{{ stream.id }}" 
+                                    data-action="start">
+                                <i class="fas fa-play"></i> Start
+                            </button>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('stream_player', stream_id=stream.id) }}" 
+                           class="btn btn-outline-info">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="btn-group w-100" role="group">
+                        <a href="{{ url_for('edit_stream', stream_id=stream.id) }}" 
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                onclick="showEmbedCode({{ stream.id }})">
+                            <i class="fas fa-code"></i> Embed
+                        </button>
+                        
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                onclick="showStats({{ stream.id }})">
+                            <i class="fas fa-chart-line"></i> Stats
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    <small class="text-muted">
+                        Last updated: <span id="last-update-{{ stream.id }}">{{ stream.updated_at.strftime('%H:%M:%S') }}</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                <h3>No Streams Yet</h3>
+                <p class="text-muted">Get started by creating your first stream.</p>
+                <a href="{{ url_for('new_stream') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Stream
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Embed Code Modal -->
+<div class="modal fade" id="embedModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Embed Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Iframe Embed Code:</label>
+                    <textarea class="form-control" id="embedCode" rows="3" readonly></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Direct Link:</label>
+                    <input type="text" class="form-control" id="directLink" readonly>
+                </div>
+                <button class="btn btn-outline-secondary" onclick="copyToClipboard('embedCode')">
+                    <i class="fas fa-copy"></i> Copy Embed Code
+                </button>
+                <button class="btn btn-outline-secondary" onclick="copyToClipboard('directLink')">
+                    <i class="fas fa-copy"></i> Copy Link
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Modal -->
+<div class="modal fade" id="statsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Stream Statistics</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <canvas id="statsChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

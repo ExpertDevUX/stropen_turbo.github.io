@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}{{ embed_info.name }} - Stream Player{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>{{ embed_info.name }}</h1>
+            <div>
+                <span class="badge bg-{{ 'success' if embed_info.status == 'running' else 'secondary' }} me-2">
+                    {{ embed_info.status.title() }}
+                </span>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Video Player -->
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <video
+                    id="video-player"
+                    class="video-js vjs-default-skin w-100"
+                    controls
+                    preload="auto"
+                    data-setup='{"fluid": true, "responsive": true}'
+                >
+                    <p class="vjs-no-js">
+                        To view this video please enable JavaScript, and consider upgrading to a web browser that
+                        <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
+                    </p>
+                </video>
+            </div>
+        </div>
+        
+        <!-- Player Controls -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-play-circle"></i> Player Controls</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="formatSelect" class="form-label">Streaming Format</label>
+                            <select class="form-select" id="formatSelect" onchange="switchFormat()">
+                                {% if embed_info.hls_urls %}
+                                <option value="hls">HLS</option>
+                                {% endif %}
+                                {% if embed_info.dash_urls %}
+                                <option value="dash">DASH</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="qualitySelect" class="form-label">Quality</label>
+                            <select class="form-select" id="qualitySelect" onchange="switchQuality()">
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="player.play()">
+                        <i class="fas fa-play"></i> Play
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="player.pause()">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button class="btn btn-outline-info" onclick="toggleFullscreen()">
+                        <i class="fas fa-expand"></i> Fullscreen
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="refreshStream()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Stream Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Stream Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Status:</strong></td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if embed_info.status == 'running' else 'secondary' }}">
+                                {{ embed_info.status.title() }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stream ID:</strong></td>
+                        <td>{{ embed_info.stream_id }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>HLS Formats:</strong></td>
+                        <td>{{ embed_info.hls_urls|length }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DASH Formats:</strong></td>
+                        <td>{{ embed_info.dash_urls|length }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Embed Code -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-code"></i> Embed Code</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Iframe Embed:</label>
+                    <textarea class="form-control" id="embedCode" rows="3" readonly>{{ '<iframe src="' + url_for('stream_embed', stream_id=embed_info.stream_id, _external=True) + '" width="800" height="450" frameborder="0" allowfullscreen></iframe>' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Direct Link:</label>
+                    <input type="text" class="form-control" id="directLink" 
+                           value="{{ url_for('stream_player', stream_id=embed_info.stream_id, _external=True) }}" readonly>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="copyToClipboard('embedCode')">
+                        <i class="fas fa-copy"></i> Copy Embed Code
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="copyToClipboard('directLink')">
+                        <i class="fas fa-copy"></i> Copy Direct Link
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Live Statistics -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line"></i> Live Statistics</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="liveStatsChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/player.js') }}"></script>
+<script>
+// Initialize player with embed info
+const embedInfo = {{ embed_info | tojson }};
+initializePlayer(embedInfo);
+
+// Copy to clipboard function
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    document.execCommand('copy');
+    
+    // Show feedback
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    setTimeout(() => {
+        button.innerHTML = originalText;
+    }, 2000);
+}
+</script>
+{% endblock %}

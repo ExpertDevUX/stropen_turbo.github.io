@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Advanced Streaming Panel{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+.docs-content {
+    line-height: 1.6;
+}
+.docs-content h1, .docs-content h2, .docs-content h3, .docs-content h4, .docs-content h5, .docs-content h6 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.5rem;
+}
+.docs-content h1 {
+    font-size: 2rem;
+    color: #007bff;
+}
+.docs-content h2 {
+    font-size: 1.5rem;
+    color: #0056b3;
+}
+.docs-content h3 {
+    font-size: 1.25rem;
+    color: #495057;
+}
+.docs-content code {
+    background-color: #f8f9fa;
+    color: #e83e8c;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 87.5%;
+}
+.docs-content pre {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+}
+.docs-content pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: 100%;
+}
+.docs-content blockquote {
+    border-left: 4px solid #007bff;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #6c757d;
+    font-style: italic;
+}
+.docs-content table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+}
+.docs-content table th,
+.docs-content table td {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    text-align: left;
+}
+.docs-content table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+.docs-content table tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+.docs-sidebar {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+.docs-toc {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+.docs-toc ul {
+    list-style: none;
+    padding-left: 0;
+}
+.docs-toc ul ul {
+    padding-left: 1rem;
+}
+.docs-toc a {
+    color: #495057;
+    text-decoration: none;
+    display: block;
+    padding: 0.25rem 0;
+}
+.docs-toc a:hover {
+    color: #007bff;
+}
+.copyright-notice {
+    background-color: #e3f2fd;
+    border-left: 4px solid #007bff;
+    padding: 1rem;
+    margin: 2rem 0;
+    border-radius: 0.25rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-9">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/docs">Documentation</a></li>
+                <li class="breadcrumb-item active">{{ title }}</li>
+            </ol>
+        </nav>
+
+        <!-- Document Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-6">{{ title }}</h1>
+            <div class="text-muted">
+                <small><i class="fas fa-copyright"></i> ExpertDevUX</small>
+            </div>
+        </div>
+
+        <!-- Copyright Notice -->
+        <div class="copyright-notice">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-shield-alt text-primary fa-lg me-3"></i>
+                <div>
+                    <strong>Professional Streaming Technology</strong><br>
+                    <small class="text-muted">
+                        This documentation is part of the Advanced Streaming Panel developed by 
+                        <strong>ExpertDevUX</strong>. For professional support and custom development services, 
+                        contact <a href="mailto:support@expertdevux.com">support@expertdevux.com</a>.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Content -->
+        <div class="docs-content" id="docs-content">
+            <!-- Content will be rendered here by JavaScript -->
+        </div>
+
+        <!-- Navigation -->
+        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+            <a href="/docs" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Documentation
+            </a>
+            <div class="btn-group">
+                <a href="https://github.com/expertdevux/streaming-panel/issues" class="btn btn-outline-info">
+                    <i class="fab fa-github"></i> Report Issue
+                </a>
+                <a href="mailto:support@expertdevux.com" class="btn btn-outline-primary">
+                    <i class="fas fa-envelope"></i> Contact Support
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3">
+        <div class="docs-sidebar">
+            <!-- Table of Contents -->
+            <div class="docs-toc">
+                <h6><i class="fas fa-list"></i> Table of Contents</h6>
+                <div id="toc">
+                    <!-- Generated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6><i class="fas fa-link"></i> Quick Links</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><a href="/docs/tutorial" class="text-decoration-none">Tutorial</a></li>
+                        <li><a href="/docs/api" class="text-decoration-none">API Reference</a></li>
+                        <li><a href="/docs/deployment" class="text-decoration-none">Deployment</a></li>
+                        <li><a href="/docs/contributing" class="text-decoration-none">Contributing</a></li>
+                        <li class="mt-2 pt-2 border-top">
+                            <a href="https://github.com/expertdevux/streaming-panel" class="text-decoration-none">
+                                <i class="fab fa-github"></i> GitHub
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Expert Dev UX Info -->
+            <div class="card mt-3">
+                <div class="card-header bg-primary text-white">
+                    <h6><i class="fas fa-star"></i> Professional Services</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-2">
+                        <strong>ExpertDevUX</strong> provides professional streaming solutions, 
+                        custom development, and technical consultation.
+                    </p>
+                    <div class="d-grid">
+                        <a href="mailto:support@expertdevux.com" class="btn btn-primary btn-sm">
+                            <i class="fas fa-envelope"></i> Get Support
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Markdown content passed from the server
+const markdownContent = `{{ content | replace('`', '\\`') | replace('\\', '\\\\') | replace('\n', '\\n') | replace('\r', '') | safe }}`;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Configure marked options
+    marked.setOptions({
+        highlight: function(code, lang) {
+            if (lang && hljs.getLanguage(lang)) {
+                try {
+                    return hljs.highlight(code, { language: lang }).value;
+                } catch (err) {}
+            }
+            return hljs.highlightAuto(code).value;
+        }
+    });
+
+    // Render markdown
+    const contentElement = document.getElementById('docs-content');
+    contentElement.innerHTML = marked.parse(markdownContent);
+
+    // Generate table of contents
+    generateTableOfContents();
+
+    // Initialize syntax highlighting
+    hljs.highlightAll();
+});
+
+function generateTableOfContents() {
+    const headings = document.querySelectorAll('#docs-content h1, #docs-content h2, #docs-content h3, #docs-content h4');
+    const tocElement = document.getElementById('toc');
+    
+    if (headings.length === 0) {
+        tocElement.innerHTML = '<p class="text-muted small">No headings found</p>';
+        return;
+    }
+
+    let tocHTML = '<ul>';
+    let currentLevel = 1;
+
+    headings.forEach((heading, index) => {
+        const level = parseInt(heading.tagName.substring(1));
+        const id = `heading-${index}`;
+        const text = heading.textContent;
+
+        // Add ID to heading for linking
+        heading.id = id;
+
+        // Adjust nesting level
+        if (level > currentLevel) {
+            tocHTML += '<ul>'.repeat(level - currentLevel);
+        } else if (level < currentLevel) {
+            tocHTML += '</ul>'.repeat(currentLevel - level);
+        }
+
+        tocHTML += `<li><a href="#${id}">${text}</a></li>`;
+        currentLevel = level;
+    });
+
+    // Close remaining lists
+    tocHTML += '</ul>'.repeat(currentLevel);
+    tocElement.innerHTML = tocHTML;
+}
+</script>
+{% endblock %}

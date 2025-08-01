@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if stream else 'New' }} Stream - Stream Panel{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1>{{ 'Edit' if stream else 'New' }} Stream Configuration</h1>
+        
+        <form method="POST" action="{{ url_for('save_stream') }}">
+            {% if stream %}
+                <input type="hidden" name="stream_id" value="{{ stream.id }}">
+            {% endif %}
+            
+            <!-- Basic Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-cog"></i> Basic Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Stream Name</label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               value="{{ stream.name if stream else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="input_url" class="form-label">Input URL</label>
+                        <input type="text" class="form-control" id="input_url" name="input_url" 
+                               value="{{ stream.input_url if stream else '' }}" 
+                               placeholder="rtmp://localhost:1935/live/stream" required>
+                        <div class="form-text">RTMP, SRT, or WebRTC input URL</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="input_type" class="form-label">Input Type</label>
+                        <select class="form-select" id="input_type" name="input_type" required>
+                            <option value="rtmp" {{ 'selected' if stream and stream.input_type == 'rtmp' else '' }}>RTMP</option>
+                            <option value="srt" {{ 'selected' if stream and stream.input_type == 'srt' else '' }}>SRT</option>
+                            <option value="webrtc" {{ 'selected' if stream and stream.input_type == 'webrtc' else '' }}>WebRTC</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="latency_mode" class="form-label">Latency Mode</label>
+                        <select class="form-select" id="latency_mode" name="latency_mode">
+                            <option value="low" {{ 'selected' if stream and stream.latency_mode == 'low' else '' }}>Low Latency (1-3s)</option>
+                            <option value="tutorial" {{ 'selected' if stream and stream.latency_mode == 'tutorial' else 'selected' }}>Tutorial Mode (3-5s)</option>
+                            <option value="high" {{ 'selected' if stream and stream.latency_mode == 'high' else '' }}>High Quality (6-10s)</option>
+                        </select>
+                        <div class="form-text">Tutorial mode optimized for educational content with balanced latency and quality</div>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="record_enabled" name="record_enabled" 
+                               {{ 'checked' if stream and stream.record_enabled else '' }}>
+                        <label class="form-check-label" for="record_enabled">
+                            Enable Recording
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Video Quality Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-film"></i> Video Quality</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Output Qualities</label>
+                        <div class="row">
+                            {% for quality, settings in quality_profiles.items() %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="quality_{{ quality }}" 
+                                           name="qualities" value="{{ quality }}" 
+                                           {{ 'checked' if quality == '720p' else '' }}>
+                                    <label class="form-check-label" for="quality_{{ quality }}">
+                                        {{ quality }} ({{ settings.bitrate }}k)
+                                        <small class="text-muted d-block">{{ settings.width }}x{{ settings.height }}</small>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RTMP Destinations -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-share-alt"></i> Streaming Destinations</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addDestination()">
+                        <i class="fas fa-plus"></i> Add Platform
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="destinations-container">
+                        <!-- Destinations will be added here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Advanced Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-sliders-h"></i> Advanced Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="video_codec" class="form-label">Video Codec</label>
+                                <select class="form-select" id="video_codec" name="video_codec">
+                                    <option value="h264" {{ 'selected' if stream and stream.video_codec == 'h264' else '' }}>H.264</option>
+                                    <option value="h265" {{ 'selected' if stream and stream.video_codec == 'h265' else '' }}>H.265</option>
+                                    <option value="vp9" {{ 'selected' if stream and stream.video_codec == 'vp9' else '' }}>VP9</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="audio_codec" class="form-label">Audio Codec</label>
+                                <select class="form-select" id="audio_codec" name="audio_codec">
+                                    <option value="aac" {{ 'selected' if stream and stream.audio_codec == 'aac' else '' }}>AAC</option>
+                                    <option value="mp3" {{ 'selected' if stream and stream.audio_codec == 'mp3' else '' }}>MP3</option>
+                                    <option value="opus" {{ 'selected' if stream and stream.audio_codec == 'opus' else '' }}>Opus</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bitrate_mode" class="form-label">Bitrate Mode</label>
+                                <select class="form-select" id="bitrate_mode" name="bitrate_mode">
+                                    <option value="cbr" {{ 'selected' if stream and stream.bitrate_mode == 'cbr' else '' }}>CBR (Constant)</option>
+                                    <option value="vbr" {{ 'selected' if stream and stream.bitrate_mode == 'vbr' else '' }}>VBR (Variable)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="keyframe_interval" class="form-label">Keyframe Interval (seconds)</label>
+                                <input type="number" class="form-control" id="keyframe_interval" name="keyframe_interval" 
+                                       value="{{ stream.keyframe_interval if stream else 2 }}" min="1" max="10">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submit Buttons -->
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {{ 'Update' if stream else 'Create' }} Stream
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Platform Destination Template -->
+<template id="destination-template">
+    <div class="destination-item border rounded p-3 mb-3">
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">Platform</label>
+                <select class="form-select platform-select" onchange="updateRtmpUrl(this)">
+                    <option value="">Select Platform</option>
+                    {% for platform, url in platform_endpoints.items() %}
+                    <option value="{{ platform }}" data-rtmp-url="{{ url }}">{{ platform.title() }}</option>
+                    {% endfor %}
+                    <option value="custom">Custom RTMP</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label">RTMP URL</label>
+                <input type="text" class="form-control rtmp-url" placeholder="rtmp://...">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Stream Key</label>
+                <input type="text" class="form-control stream-key" placeholder="Stream key">
+            </div>
+            
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-danger" onclick="removeDestination(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function addDestination() {
+    const template = document.getElementById('destination-template');
+    const container = document.getElementById('destinations-container');
+    const clone = template.content.cloneNode(true);
+    container.appendChild(clone);
+}
+
+function removeDestination(button) {
+    button.closest('.destination-item').remove();
+}
+
+function updateRtmpUrl(select) {
+    const rtmpInput = select.closest('.destination-item').querySelector('.rtmp-url');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption.dataset.rtmpUrl) {
+        rtmpInput.value = selectedOption.dataset.rtmpUrl;
+        rtmpInput.readOnly = true;
+    } else {
+        rtmpInput.value = '';
+        rtmpInput.readOnly = false;
+    }
+}
+
+// Add one destination by default
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('destinations-container').children.length === 0) {
+        addDestination();
+    }
+});
+</script>
+{% endblock %}
